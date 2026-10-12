@@ -4,7 +4,7 @@ import type { Screen } from '../UI';
 import type { Game } from '../../core/Game';
 import { backButton, btn, currencyBar } from './common';
 import { BOOSTERS, CARS, LIVERIES, NEONS, PAINTS, RIMS, TRAILS, byId, type CarDef } from '../../meta/Catalog';
-import { FREE_COINS, type ItemKind } from '../../meta/Economy';
+import { Economy, FREE_COINS, type ItemKind } from '../../meta/Economy';
 import type { CarLook } from '../../vehicles/CarModel';
 import { effectiveStats } from '../../gameplay/Racer';
 import { openReward } from './Popups';
@@ -372,17 +372,27 @@ export class ShopScreen implements Screen {
     this.cur.refresh();
   }
 
+  /** Full-width offer card: text on the left, reward pill + action button stacked on the right. */
+  private wideCard(title: string, sub: string, reward: HTMLElement, action: HTMLElement) {
+    return h(
+      'div',
+      { class: 'card wide-card' },
+      h(
+        'div',
+        { class: 'col', style: 'gap:4px;align-items:flex-start;flex:1;min-width:0' },
+        h('div', { class: 'title', style: 'font-size:16px;line-height:1.1' }, title),
+        h('div', { style: 'font-size:12px;opacity:.8' }, sub),
+        reward,
+      ),
+      action,
+    );
+  }
+
   private renderCoins() {
     const eco = this.game.eco;
     const limit = this.game.ads.policy.cfg.freeCoinsPerDay;
     const left = eco.freeCoinsLeft(limit);
     const amount = FREE_COINS(this.game.save.data.level);
-    const free = h(
-      'div',
-      { class: 'card', style: 'grid-column: 1 / -1; min-height: 0; flex-direction: row; justify-content: space-between; padding: 14px' },
-      h('div', { class: 'col', style: 'gap:4px;align-items:flex-start' }, h('div', { class: 'title', style: 'font-size:18px' }, t('freeCoins')), h('div', { style: 'font-size:12px;opacity:.8' }, t('freeCoins.left', { n: left }))),
-      h('div', { class: 'row' }, h('div', { class: 'pill' }, coinIco(), `+${amount}`)),
-    );
     const watch = btn(t('watch'), 'yellow ad', async () => {
       if (eco.freeCoinsLeft(limit) <= 0) return;
       if (await this.game.ads.rewarded('free_coins')) {
@@ -391,8 +401,32 @@ export class ShopScreen implements Screen {
       }
     }, this.game);
     if (left <= 0) watch.classList.add('disabled');
-    free.append(watch);
-    this.grid.append(free);
+    this.grid.append(this.wideCard(t('freeCoins'), t('freeCoins.left', { n: left }), h('div', { class: 'pill' }, coinIco(), `+${amount}`), watch));
+
+    const bagAmount = amount * 6;
+    const bagN = Economy.COIN_BAG_ADS;
+    const bagBtn = btn(`${eco.coinBagProgress()}/${bagN}`, 'yellow ad', async () => {
+      if (!(await this.game.ads.rewarded('coin_bag'))) return;
+      if (eco.addCoinBagProgress()) openReward(this.game, { coins: bagAmount, title: t('coinBag') }, () => this.renderGrid());
+      else {
+        this.game.audio.sfx.play('reward');
+        this.renderGrid();
+      }
+    }, this.game);
+    this.grid.append(this.wideCard(`💰 ${t('coinBag')}`, t('coinBag.sub', { n: bagN, c: fmt(bagAmount) }), h('div', { class: 'pill' }, coinIco(), `+${fmt(bagAmount)}`), bagBtn));
+
+    // free gems (daily limit)
+    const gemLimit = 5;
+    const gemsLeft = eco.freeGemsLeft(gemLimit);
+    const gemWatch = btn(t('watch'), 'yellow ad', async () => {
+      if (eco.freeGemsLeft(gemLimit) <= 0) return;
+      if (await this.game.ads.rewarded('free_gems')) {
+        eco.markFreeGems();
+        openReward(this.game, { gems: 1, title: t('freeGems') }, () => this.renderGrid());
+      }
+    }, this.game);
+    if (gemsLeft <= 0) gemWatch.classList.add('disabled');
+    this.grid.append(this.wideCard(t('freeGems'), t('freeCoins.left', { n: gemsLeft }), h('div', { class: 'pill' }, gemIco(), '+1'), gemWatch));
     // gems exchange
     const packs = [
       { gems: 5, coins: 1200 },

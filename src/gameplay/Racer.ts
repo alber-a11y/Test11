@@ -80,6 +80,11 @@ export class Racer {
   targetD = 0;
   laneTimer = 0;
   mistakeTime = 0;
+  /** Rubber-band multiplier on top speed / acceleration (bots only). */
+  band = 1;
+  /** Smoothed visual body lean. */
+  visRoll = 0;
+  visPitch = 0;
 
   /** Smoothed world pose for camera. */
   readonly pos = new THREE.Vector3();

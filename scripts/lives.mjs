@@ -1,0 +1,25 @@
+// First fall is free (respawn), second fall -> game over screen with 4 buttons.
+import { chromium } from '@playwright/test';
+const out = process.argv[2];
+const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const page = await browser.newPage({ viewport: { width: 390, height: 800 }, locale: 'ru-RU' });
+page.on('pageerror', (e) => console.log('ERR', e.message));
+await page.goto('http://localhost:5173/?ts=6');
+await page.waitForTimeout(1500);
+await page.mouse.click(195, 400);
+await page.evaluate(() => { const g = window.game; g.save.data.tutorialDone = true; g.startRace(4, []); g.race.countdown = 0.01; g.race.autoPlayer = true; });
+await page.waitForFunction(() => window.game.race.state === 'racing');
+await page.waitForTimeout(1500);
+const st = () => page.evaluate(() => ({ screen: window.game.ui.currentName, hearts: window.game.race?.hearts, state: window.game.race?.state, p: window.game.race?.player.state }));
+console.log('start', JSON.stringify(await st()));
+await page.evaluate(() => { const r = window.game.race; r.startFall(r.player, 'fall'); });
+await page.waitForFunction(() => window.game.race.player.state === 'drive', null, { timeout: 30000 });
+console.log('after 1st fall', JSON.stringify(await st()));
+await page.waitForTimeout(1500);
+await page.screenshot({ path: `${out}/l1-after-first-fall.png` });
+await page.evaluate(() => { const r = window.game.race; r.startFall(r.player, 'fall'); });
+await page.waitForFunction(() => window.game.ui.currentName === 'gameover', null, { timeout: 30000 });
+await page.waitForTimeout(600);
+console.log('after 2nd fall', JSON.stringify(await st()), await page.evaluate(() => [...document.querySelectorAll('.result .btn')].map((b) => b.textContent.trim())));
+await page.screenshot({ path: `${out}/l2-gameover.png` });
+await browser.close();

@@ -1934,3 +1934,67 @@ body.ad-active #ui-root * {
   opacity: 0.4;
   font-style: normal;
 }
+
+.diff-seg {
+  justify-content: stretch;
+  flex-wrap: nowrap;
+}
+
+.diff-seg button {
+  flex: 1;
+  padding: 8px 4px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.diff-seg button.on.diff-easy {
+  background: linear-gradient(180deg, #7dff5a, #22c03a);
+  color: #0b3a12;
+}
+
+.diff-seg button.on.diff-hard {
+  background: linear-gradient(180deg, #ff8a5a, #e8401a);
+  color: #fff;
+}
+
+.diff-seg button.on.diff-extreme {
+  background: linear-gradient(180deg, #ff4a6a, #a0102a);
+  color: #fff;
+}
+
+.diff-reward {
+  color: var(--yellow);
+  font-size: 13px;
+}
+
+.card.wide-card {
+  grid-column: 1 / -1;
+  min-height: auto;
+  flex-shrink: 0;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+}
+
+.card.wide-card .pill {
+  font-size: 14px;
+  padding: 3px 12px 3px 4px;
+  box-shadow: none;
+}
+
+.card.wide-card .pill .coin-ico,
+.card.wide-card .pill .gem-ico {
+  width: 20px;
+  height: 20px;
+}
+
+.card.wide-card > .btn {
+  flex: none;
+}
+
+.card.wide-card .btn {
+  font-size: 14px;
+  padding: 8px 12px;
+  min-height: 40px;
+}

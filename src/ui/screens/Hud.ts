@@ -128,7 +128,7 @@ export class HudScreen implements Screen {
     if (r.hearts !== this.lastHearts) {
       this.lastHearts = r.hearts;
       this.hearts.innerHTML = '';
-      const total = Math.max(3, r.hearts);
+      const total = Math.max(2, r.hearts);
       for (let i = 0; i < total; i++) this.hearts.append(h('span', { class: `heart-ico ${i < r.hearts ? '' : 'off'}` }));
     }
     this.coins.textContent = fmt(r.coins);

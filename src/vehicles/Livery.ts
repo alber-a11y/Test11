@@ -124,6 +124,43 @@ export function bodyTexture(paint: PaintDef, livery: LiveryDef, shape: CarShape,
         }
         break;
       }
+      case 'bolt': {
+        // zig-zag lightning along both sides + hood
+        for (const u0 of [0.2, 0.74, 0.47]) {
+          ctx.fillStyle = '#ffe02a';
+          ctx.strokeStyle = '#151515';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          const w = u0 === 0.47 ? 0.03 : 0.045;
+          const pts: [number, number][] = [];
+          const steps = 7;
+          for (let i = 0; i <= steps; i++) pts.push([u0 + (i % 2 ? w : -w) * 0.6, 0.05 + (i / steps) * 0.9]);
+          ctx.moveTo(X(pts[0][0] - w), Y(pts[0][1]));
+          for (const [u, v] of pts) ctx.lineTo(X(u - w * 0.5), Y(v));
+          for (let i = pts.length - 1; i >= 0; i--) ctx.lineTo(X(pts[i][0] + w * 0.5), Y(pts[i][1]));
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+        break;
+      }
+      case 'stars': {
+        const star = (x: number, y: number, r: number) => {
+          ctx.beginPath();
+          for (let i = 0; i < 10; i++) {
+            const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+            const rr = i % 2 ? r * 0.45 : r;
+            ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+          }
+          ctx.closePath();
+          ctx.fill();
+        };
+        for (let i = 0; i < 70; i++) {
+          ctx.fillStyle = rng.chance(0.25) ? '#ffe02a' : 'rgba(255,255,255,0.9)';
+          star(rng.next() * W, rng.next() * H, rng.range(5, 14));
+        }
+        break;
+      }
       case 'tiger': {
         ctx.fillStyle = '#121214';
         for (let i = 0; i < 26; i++) {

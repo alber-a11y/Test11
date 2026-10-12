@@ -58,7 +58,8 @@ export function generateLevel(level: number): LevelData {
   let alt = altStart;
   let lat = 0;
   let inTube = false;
-  const targetLen = Math.round(1100 + 1500 * diff + rng.range(-100, 150) + (boss ? 300 : 0));
+  // ~25% longer than the first version so a race lasts a bit longer from level 1
+  const targetLen = Math.round((1100 + 1500 * diff + rng.range(-100, 150)) * 1.25 + (boss ? 350 : 0));
 
   const cur = () => ctl.length * TRACK_STEP;
 

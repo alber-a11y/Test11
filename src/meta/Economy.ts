@@ -6,7 +6,10 @@ import { Rng } from '../core/Rng';
 export type ItemKind = 'car' | 'paint' | 'livery' | 'rim' | 'neon' | 'trail';
 
 export const PLACE_REWARD = [120, 80, 55, 30, 20, 12];
-export const levelReward = (level: number, place: number) => Math.round((PLACE_REWARD[place - 1] ?? 10) * (1 + level * 0.06));
+/** Harder rivals pay more. */
+export const DIFFICULTY_REWARD = { easy: 0.75, normal: 1, hard: 1.35, extreme: 1.75 } as const;
+export const levelReward = (level: number, place: number, difficulty: keyof typeof DIFFICULTY_REWARD = 'normal') =>
+  Math.round((PLACE_REWARD[place - 1] ?? 10) * (1 + level * 0.06) * DIFFICULTY_REWARD[difficulty]);
 export const chestEvery = 5;
 export const FREE_COINS = (level: number) => 100 + level * 10;
 
@@ -257,6 +260,38 @@ export class Economy {
   freeCoinsLeft(limit: number) {
     if (this.d.freeCoinsAds.day !== today()) return limit;
     return Math.max(0, limit - this.d.freeCoinsAds.count);
+  }
+
+  freeGemsLeft(limit: number) {
+    const f = this.d.freeGemsAds ?? { day: '', count: 0 };
+    if (f.day !== today()) return limit;
+    return Math.max(0, limit - f.count);
+  }
+
+  markFreeGems() {
+    if (!this.d.freeGemsAds || this.d.freeGemsAds.day !== today()) this.d.freeGemsAds = { day: today(), count: 0 };
+    this.d.freeGemsAds.count++;
+    this.d.stats.adsWatched++;
+    this.s.save();
+  }
+
+  /** Coin bag: watch N ads in a row (progress is kept), then the bag pays out and resets. */
+  static COIN_BAG_ADS = 3;
+  coinBagProgress() {
+    return this.d.adProgress['bag'] ?? 0;
+  }
+
+  addCoinBagProgress(): boolean {
+    const n = this.coinBagProgress() + 1;
+    this.d.stats.adsWatched++;
+    if (n >= Economy.COIN_BAG_ADS) {
+      this.d.adProgress['bag'] = 0;
+      this.s.save();
+      return true;
+    }
+    this.d.adProgress['bag'] = n;
+    this.s.save();
+    return false;
   }
 
   markFreeCoins() {

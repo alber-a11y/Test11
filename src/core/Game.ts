@@ -254,7 +254,7 @@ export class Game {
     const look = trialCarId ? { carId, paint: def.paint, livery: def.livery, rim: def.rim, neon: 'blue', trail: 'blue' } : this.eco.look(carId);
     const upgrades = trialCarId ? {} : this.eco.custom(carId).upgrades;
     this.effects.clear();
-    this.race = new Race({ level: this.level, playerDef: def, look, upgrades, boosters }, this.effects);
+    this.race = new Race({ level: this.level, playerDef: def, look, upgrades, boosters, difficulty: this.save.data.settings.difficulty }, this.effects);
     this.renderer.scene.add(this.race.group);
     this.chase.reset();
     this.finishTimer = -1;
@@ -270,7 +270,7 @@ export class Game {
     this.audio.engine.duckMusic(1);
     this.audio.car.start(CARS.indexOf(def) % 3);
     this.ads.gameplayStart();
-    track('race_start', { level: levelNum, car: carId });
+    track('race_start', { level: levelNum, car: carId, difficulty: this.save.data.settings.difficulty });
     this.last = performance.now();
   }
 
@@ -358,37 +358,38 @@ export class Game {
       }
       if (kind !== 'coin') this.vibrate(20);
     });
-    ev.on('heartLost', () => {
+    ev.on('heartLost', ({ hearts }) => {
       sfx.play('heartLost');
       this.hud?.hit();
+      if (hearts === 1) setTimeout(() => this.hud?.floater(t('lastLife'), '#ff6a7a'), 900);
       this.vibrate(120);
     });
     ev.on('crash', ({ hard }) => {
       sfx.play(hard ? 'crash' : 'smash');
-      this.chase.addShake(hard ? 1 : 0.4);
+      this.chase.addShake(hard ? 0.6 : 0.2);
       if (hard) this.vibrate(150);
     });
     ev.on('wall', ({ strength }) => {
       sfx.play('wall', strength);
-      this.chase.addShake(Math.min(0.4, strength * 0.04));
+      this.chase.addShake(Math.min(0.15, strength * 0.015));
     });
     ev.on('bump', ({ strength }) => {
       sfx.play('bump');
-      this.chase.addShake(Math.min(0.5, strength * 0.05));
+      this.chase.addShake(Math.min(0.2, strength * 0.02));
       this.vibrate(30);
     });
     ev.on('nitro', () => {
       sfx.play('nitro');
-      this.chase.addShake(0.3);
+      this.chase.addShake(0.12);
     });
     ev.on('boost', () => {
       sfx.play('boost');
-      this.chase.addShake(0.2);
+      this.chase.addShake(0.08);
     });
     ev.on('jump', () => sfx.play('jump'));
     ev.on('land', ({ hard }) => {
       sfx.play('land', hard ? 1 : 0);
-      this.chase.addShake(hard ? 0.5 : 0.2);
+      this.chase.addShake(hard ? 0.3 : 0.1);
     });
     ev.on('fall', () => {
       sfx.play('fall');
@@ -431,7 +432,7 @@ export class Game {
     if (!this.race || !this.level) return;
     const level = this.level.level;
     const stars = this.eco.completeLevel(level, res.place, res.score);
-    const base = levelReward(level, res.place);
+    const base = levelReward(level, res.place, this.race.difficulty);
     const earned = base + res.coins;
     this.eco.addCoins(earned);
     this.eco.addGems(res.gems);

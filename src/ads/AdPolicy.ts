@@ -14,7 +14,7 @@ export const DEFAULT_POLICY: AdPolicyConfig = {
   afterRewardedCooldown: 30,
   minLevelForInterstitial: 3,
   freeCoinsPerDay: 10,
-  maxRevives: 2,
+  maxRevives: 3,
 };
 
 /** ?adpolicy=test — interstitials as often as possible (QA). */

@@ -87,7 +87,18 @@ export interface RaceSetup {
   upgrades: Partial<Record<UpgradeStat, number>>;
   boosters: BoosterId[];
   trialCar?: boolean;
+  difficulty?: Difficulty;
 }
+
+export type Difficulty = 'easy' | 'normal' | 'hard' | 'extreme';
+
+/** How strong rivals are. Rewards scale with it (see Economy.difficultyRewardMult). */
+export const DIFFICULTY: Record<Difficulty, { strength: number; skill: number; band: number; nitro: number; mistakes: number }> = {
+  easy: { strength: -0.08, skill: -0.08, band: 0.6, nitro: 0.6, mistakes: 1.6 },
+  normal: { strength: -0.02, skill: 0, band: 1.1, nitro: 1.2, mistakes: 0.9 },
+  hard: { strength: 0.03, skill: 0.04, band: 1.4, nitro: 1.7, mistakes: 0.5 },
+  extreme: { strength: 0.08, skill: 0.08, band: 1.8, nitro: 2.3, mistakes: 0.25 },
+};
 
 const BOT_NAMES = ['Blaze', 'Viper', 'Nitro', 'Comet', 'Raven', 'Tank', 'Flash', 'Ghost', 'Rocket', 'Zed', 'Dash', 'Storm'];
 
@@ -103,8 +114,11 @@ export class Race {
   state: RaceState = 'countdown';
   countdown = 3.5;
   time = 0;
-  hearts = 3;
-  readonly maxHearts = 5;
+  /** Two lives: the first fall is free, the second one ends the race (game over). */
+  hearts = 2;
+  readonly maxHearts = 3;
+  readonly difficulty: Difficulty;
+  private diffCfg: (typeof DIFFICULTY)[Difficulty];
   coins = 0;
   gems = 0;
   score = 0;
@@ -128,6 +142,8 @@ export class Race {
     this.effects = effects;
     this.rng = new Rng(setup.level.seed ^ 0x77);
     const diff = setup.level.difficulty;
+    this.difficulty = setup.difficulty ?? 'normal';
+    const dc = (this.diffCfg = DIFFICULTY[this.difficulty]);
 
     // ---- player ----
     const pStats = driveStats(effectiveStats(setup.playerDef, setup.upgrades));
@@ -152,7 +168,7 @@ export class Race {
       // bots get stats comparable to the player's, scaled with difficulty
       const base = driveStats(effectiveStats(def));
       const pl = pStats;
-      const strength = (lvl <= 2 ? 0.86 : 0.9 + diff * 0.12) + (isBoss ? 0.06 : 0) + this.rng.range(-0.04, 0.03);
+      const strength = (lvl <= 2 ? 0.9 : 0.93 + diff * 0.1) + dc.strength + (isBoss ? 0.06 : 0) + this.rng.range(-0.04, 0.03);
       const stats = {
         maxSpeed: (base.maxSpeed * 0.35 + pl.maxSpeed * 0.65) * strength,
         accel: (base.accel * 0.4 + pl.accel * 0.6) * strength,
@@ -160,11 +176,11 @@ export class Race {
         nitroTime: base.nitroTime,
       };
       const ai: AiProfile = {
-        skill: clamp(0.84 + diff * 0.14 + this.rng.range(-0.06, 0.05) + (isBoss ? 0.06 : 0), 0.7, 1.02),
+        skill: clamp(0.86 + diff * 0.12 + dc.skill + this.rng.range(-0.05, 0.04) + (isBoss ? 0.05 : 0), 0.7, 1.04),
         speedFactor: 1,
         lane: this.rng.pick([-3.5, 0, 3.5]),
         aggression: this.rng.next(),
-        nitroChance: 0.15 + diff * 0.4,
+        nitroChance: (0.15 + diff * 0.4) * dc.nitro,
       };
       let name = this.rng.pick(BOT_NAMES);
       while (usedNames.has(name)) name = this.rng.pick(BOT_NAMES);
@@ -179,7 +195,7 @@ export class Race {
       [61, -3.2],
       [61, 3.2],
       [52, -3.2],
-      [52, 3.2],
+      [44, 0],
     ];
     for (const r of this.racers) {
       if (r.isPlayer) continue;
@@ -350,11 +366,11 @@ export class Race {
     // ---- longitudinal ----
     const nitro = r.nitroTime > 0;
     const boost = r.boostTime > 0;
-    const vmax = st.maxSpeed * (nitro ? 1.32 : 1) * (boost ? 1.18 : 1);
+    const vmax = st.maxSpeed * r.band * (nitro ? 1.32 : 1) * (boost ? 1.18 : 1);
     if (r.state === 'drive' || r.state === 'finished') {
       if (r.throttle > 0.01) {
         const k = Math.max(0, 1 - Math.pow(r.v / vmax, 3));
-        r.v += (st.accel * k * r.throttle + (nitro ? 16 : 0)) * dt;
+        r.v += (st.accel * r.band * k * r.throttle + (nitro ? 16 : 0)) * dt;
       } else {
         r.v -= (5 + 0.004 * r.v * r.v) * dt;
       }
@@ -551,7 +567,7 @@ export class Race {
   /** Revive after game over (rewarded ad). */
   revive() {
     const p = this.player;
-    this.hearts = 2;
+    this.hearts = 1;
     this.state = 'racing';
     this.revivesUsed++;
     p.state = 'fall';
@@ -566,7 +582,7 @@ export class Race {
   private autopilot(r: Racer, dt: number, finished: boolean) {
     if (r.state === 'fall' || r.state === 'grid') return;
     const tr = this.track;
-    const ai = r.ai ?? { skill: 0.8, speedFactor: 0.7, lane: 0, aggression: 0, nitroChance: 0 };
+    const ai = r.ai ?? { skill: finished ? 0.8 : 0.97, speedFactor: 1, lane: 0, aggression: 0, nitroChance: finished ? 0 : 0.8 };
     // look ahead for the tightest curve
     const look = 20 + r.v * 1.4;
     let maxNeed = 0;
@@ -579,7 +595,7 @@ export class Race {
     }
     const grip = r.stats.grip * this.level.biome.grip * (tr.scalarAt(tr.tube, r.s) > 0.5 ? 1.5 : 1);
     // occasional overconfident moment: carries too much speed into a turn
-    if (!r.isPlayer && !finished && r.mistakeTime <= 0 && maxNeed > 0.014 && this.rng.chance((0.015 + ai.aggression * 0.04) * dt)) r.mistakeTime = 2.5;
+    if (!r.isPlayer && !finished && r.mistakeTime <= 0 && maxNeed > 0.014 && this.rng.chance((0.015 + ai.aggression * 0.04) * this.diffCfg.mistakes * dt)) r.mistakeTime = 2.5;
     const mistake = r.mistakeTime > 0 ? 1.8 : 1;
     if (r.mistakeTime > 0) r.mistakeTime -= dt;
     let target = maxNeed > 0.0005 ? Math.sqrt((grip * ai.skill * mistake) / maxNeed) : 999;
@@ -587,13 +603,12 @@ export class Race {
     if (rampAhead) target = Math.max(target, r.stats.maxSpeed);
     if (r.mistakeTime > 0) target = r.stats.maxSpeed * 1.1;
 
-    // rubber band against the player (keeps races tight)
+    // rubber band against the player (keeps races tight): changes the bot's real top speed
     if (!finished && !r.isPlayer) {
       const gap = this.player.s - r.s;
-      const band = clamp(gap / 220, -0.12, 0.16);
-      target *= 1 + band;
-      r.stats.maxSpeed = r.stats.maxSpeed; // unchanged; band only affects targets
-    }
+      r.band = 1 + clamp(gap / 260, -0.07, 0.13) * this.diffCfg.band;
+      target *= r.band;
+    } else r.band = 1;
     r.throttle = r.v < target ? 1 : 0;
     r.brake = r.v > target + 4 ? clamp((r.v - target) / 10, 0, 1) : 0;
 
@@ -656,8 +671,8 @@ export class Race {
           back.s = front.s - lenSum;
           // deflect sideways so the faster car slips past instead of being blocked
           const side = Math.sign(back.d - front.d) || (this.rng.chance(0.5) ? 1 : -1);
-          back.latV += side * 5;
-          front.latV -= side * 2;
+          back.latV += side * 2.5;
+          front.latV -= side * 1;
           if (back.v > front.v) {
             const dv = back.v - front.v;
             back.v -= dv * 0.45;
@@ -779,26 +794,13 @@ export class Race {
         }
         r.v *= 0.45;
         r.invulnTime = 1.6;
-        r.latV = (r.d > o.d ? 1 : -1) * 6;
+        r.latV = (r.d > o.d ? 1 : -1) * 4;
+        r.nitroTime = 0;
         this.events.emit('crash', { pos, hard: true });
         this.effects.explosion(pos);
-        this.loseHeart('crash');
-        if (this.state === 'dying') {
-          // wreck: tumble off the track
-          this.startFallVisualOnly(r);
-        }
       }
     }
     void dt;
-  }
-
-  private startFallVisualOnly(r: Racer) {
-    this.track.surface(r.s, r.d, r.h, this.smp);
-    r.fallPos.copy(this.smp.pos);
-    r.fallVel.copy(this.smp.up).multiplyScalar(9).addScaledVector(this.smp.fwd, r.v * 0.5);
-    r.fallSpin.set(4, 1, 3);
-    r.state = 'fall';
-    r.fallTimer = 99;
   }
 
   private finishPlayer() {
@@ -844,10 +846,15 @@ export class Race {
     r.pos.copy(smp.pos);
     r.up.copy(smp.up);
     r.fwd.copy(smp.fwd);
-    const roll = -r.steerSm * 0.035 + (r.slide !== 0 ? -Math.sign(r.slide) * 0.05 : 0);
-    let pitch = r.throttle > 0 ? 0.015 : r.brake > 0 ? -0.03 : 0;
-    if (r.state === 'air') pitch = clamp(r.vh * -0.012, -0.2, 0.15);
-    m.update(dt, r.v, r.steerSm, r.nitroTime > 0 || r.boostTime > 0, roll, pitch);
+    // body lean is smoothed so on/off throttle (AI bang-bang control, bumps) doesn't make the car twitch
+    const rollT = -r.steerSm * 0.03 - clamp(r.slide * 0.008, -0.04, 0.04);
+    let pitchT = r.throttle > 0 ? 0.01 : r.brake > 0 ? -0.02 : 0;
+    if (r.state === 'air') pitchT = clamp(r.vh * -0.012, -0.2, 0.15);
+    if (dt > 0) {
+      r.visRoll = damp(r.visRoll, rollT, 6, dt);
+      r.visPitch = damp(r.visPitch, pitchT, r.state === 'air' ? 6 : 4, dt);
+    }
+    m.update(dt, r.v, r.steerSm, r.nitroTime > 0 || r.boostTime > 0, r.visRoll, r.visPitch);
     m.shieldMesh.visible = r.shieldTime > 0;
     const flag = this.flags.get(r);
     if (flag) {

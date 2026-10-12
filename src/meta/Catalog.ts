@@ -138,6 +138,8 @@ export const LIVERIES: LiveryDef[] = [
   { id: 'gradient', name: 'Fade', price: 1500 },
   { id: 'camo', name: 'Camo', price: 2000 },
   { id: 'tiger', name: 'Tiger', price: 0, ads: 4 },
+  { id: 'bolt', name: 'Lightning', price: 0, ads: 3 },
+  { id: 'stars', name: 'Starry', price: 0, ads: 2 },
 ];
 
 export interface RimDef {
@@ -159,6 +161,8 @@ export const RIMS: RimDef[] = [
   { id: 'gold', name: 'Gold', spokes: 6, style: 'spoke', color: 0xd8a52a, price: 0, ads: 2 },
   { id: 'red', name: 'Red Line', spokes: 5, style: 'spoke', color: 0xd8201c, price: 1200 },
   { id: 'neonblue', name: 'Electric', spokes: 10, style: 'mesh', color: 0x22a8ff, price: 0, ads: 3 },
+  { id: 'carbonred', name: 'Carbon Red', spokes: 7, style: 'turbine', color: 0x8a1018, price: 0, ads: 3 },
+  { id: 'bronze', name: 'Bronze', spokes: 6, style: 'solid', color: 0xb8742a, price: 0, ads: 2 },
 ];
 
 export interface NeonDef {
@@ -178,6 +182,8 @@ export const NEONS: NeonDef[] = [
   { id: 'pink', name: 'Hot Pink', color: 0xff2ab4, price: 0, ads: 2 },
   { id: 'gold', name: 'Gold', color: 0xffc02a, price: 1500 },
   { id: 'rainbow', name: 'Rainbow', color: -1, price: 0, ads: 5 },
+  { id: 'cyan', name: 'Cyber', color: 0x2affea, price: 0, ads: 2 },
+  { id: 'white', name: 'Daylight', color: 0xf0f6ff, price: 0, ads: 3 },
 ];
 
 export interface TrailDef {
@@ -197,6 +203,8 @@ export const TRAILS: TrailDef[] = [
   { id: 'rainbow', name: 'Rainbow', colors: [0xff2a2a, 0x2a2aff], style: 'rainbow', price: 0, ads: 4 },
   { id: 'hearts', name: 'Love', colors: [0xff8ab4, 0xff2a6a], style: 'hearts', price: 2500 },
   { id: 'lightning', name: 'Storm', colors: [0xffffff, 0x2ae8ff], style: 'lightning', price: 4000 },
+  { id: 'gold', name: 'Gold Rush', colors: [0xfff4b0, 0xffb01a], style: 'plasma', price: 0, ads: 3 },
+  { id: 'ice', name: 'Frost', colors: [0xffffff, 0x8ae0ff], style: 'flame', price: 0, ads: 2 },
 ];
 
 export type BoosterId = 'startNitro' | 'shield' | 'heart' | 'magnet' | 'coins2x';

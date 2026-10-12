@@ -17,6 +17,7 @@ export interface Settings {
   quality: 'auto' | 'low' | 'medium' | 'high';
   controls: 'zones' | 'drag';
   lang: 'auto' | 'ru' | 'en';
+  difficulty: 'easy' | 'normal' | 'hard' | 'extreme';
 }
 
 export interface SaveData {
@@ -36,6 +37,7 @@ export interface SaveData {
   daily: { lastClaim: string; streak: number };
   wheel: { lastSpin: string; extraSpins: number };
   freeCoinsAds: { day: string; count: number };
+  freeGemsAds: { day: string; count: number };
   settings: Settings;
   stats: { races: number; wins: number; coinsEarned: number; adsWatched: number; playTime: number };
   tutorialDone: boolean;
@@ -70,7 +72,8 @@ export function defaultSave(): SaveData {
     daily: { lastClaim: '', streak: 0 },
     wheel: { lastSpin: '', extraSpins: 0 },
     freeCoinsAds: { day: '', count: 0 },
-    settings: { music: 0.6, sfx: 0.8, muted: false, vibration: true, quality: 'auto', controls: 'zones', lang: 'auto' },
+    freeGemsAds: { day: '', count: 0 },
+    settings: { music: 0.6, sfx: 0.8, muted: false, vibration: true, quality: 'auto', controls: 'zones', lang: 'auto', difficulty: 'normal' },
     stats: { races: 0, wins: 0, coinsEarned: 0, adsWatched: 0, playTime: 0 },
     tutorialDone: false,
   };

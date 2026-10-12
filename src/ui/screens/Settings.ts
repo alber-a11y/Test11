@@ -1,7 +1,7 @@
 import { h } from '../dom';
 import { t } from '../../i18n/i18n';
 import type { Game } from '../../core/Game';
-import { btn } from './common';
+import { btn, difficultySeg } from './common';
 import { confirmDialog } from './Popups';
 
 export function openSettings(game: Game) {
@@ -61,6 +61,7 @@ export function openSettings(game: Game) {
         },
       ),
     ),
+    h('div', { class: 'setting' }, h('span', null, t('difficulty')), difficultySeg(game)),
     h(
       'div',
       { class: 'setting' },

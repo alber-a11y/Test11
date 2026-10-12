@@ -2,7 +2,7 @@ import { h, coinIco } from '../dom';
 import { t } from '../../i18n/i18n';
 import type { Screen } from '../UI';
 import type { Game } from '../../core/Game';
-import { backButton, btn, currencyBar } from './common';
+import { backButton, btn, currencyBar, difficultySeg, difficultyRewardLabel } from './common';
 import { BOOSTERS, CARS, byId, type BoosterId } from '../../meta/Catalog';
 import { biomeForLevel, isBossLevel } from '../../world/biomes/Biomes';
 import { effectiveStats } from '../../gameplay/Racer';
@@ -26,6 +26,7 @@ export class PreRaceScreen implements Screen {
         h('div', { class: 'title', style: 'font-size:26px' }, `${t('level')} ${level}`),
         h('div', { class: 'level-chip' }, t(biome.nameKey), isBossLevel(level) ? h('span', { class: 'boss' }, '👑') : null),
       ),
+      this.diffRow(),
       h('div', { style: 'font-size:14px;opacity:.85' }, t('prerace.title')),
       this.grid,
     );
@@ -44,6 +45,16 @@ export class PreRaceScreen implements Screen {
     // remember auto-selected boosters the player owns
     for (const b of BOOSTERS) if (game.eco.boosterCount(b.id) > 0 && (b.id === 'startNitro' || b.id === 'shield')) this.selected.add(b.id);
     this.renderBoosters();
+  }
+
+  private diffRow() {
+    const reward = h('span', { class: 'diff-reward' }, difficultyRewardLabel(this.game));
+    return h(
+      'div',
+      { class: 'col', style: 'gap:6px' },
+      h('div', { class: 'row', style: 'justify-content:space-between;font-size:14px' }, h('span', { style: 'opacity:.85' }, t('difficulty')), reward),
+      difficultySeg(this.game, () => (reward.textContent = difficultyRewardLabel(this.game))),
+    );
   }
 
   private renderBoosters() {

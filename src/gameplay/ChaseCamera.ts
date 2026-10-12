@@ -23,7 +23,7 @@ export class ChaseCamera {
   }
 
   addShake(k: number) {
-    this.shake = Math.min(1.2, this.shake + k);
+    this.shake = Math.min(0.8, this.shake + k);
   }
 
   update(dt: number, r: Racer, nitro: boolean, portrait: boolean) {
@@ -67,11 +67,11 @@ export class ChaseCamera {
     this.up.lerp(r.up, 1 - Math.exp(-5 * dt)).normalize();
     cam.position.copy(this.pos);
     if (this.shake > 0) {
-      const s = this.shake * 0.25;
+      const s = this.shake * 0.1;
       cam.position.x += (Math.random() - 0.5) * s;
       cam.position.y += (Math.random() - 0.5) * s;
       cam.position.z += (Math.random() - 0.5) * s;
-      this.shake = Math.max(0, this.shake - dt * 2.5);
+      this.shake = Math.max(0, this.shake - dt * 3.5);
     }
     cam.up.copy(this.up);
     cam.lookAt(this.look);
