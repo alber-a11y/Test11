@@ -156,7 +156,9 @@ export class Renderer {
     c.height = h;
     c.getContext('2d')!.drawImage(r.domElement, 0, 0, w, h, 0, 0, w, h);
     r.setClearColor(prevColor, prevAlpha);
-    this.resize();
+    // restore the canvas size only (composer targets were never touched)
+    r.setPixelRatio(this.pixelRatio);
+    r.setSize(this.width, this.height, false);
     this.render();
     return c.toDataURL('image/png');
   }

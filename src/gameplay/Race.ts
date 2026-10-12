@@ -893,7 +893,7 @@ export class Race {
     for (const f of this.flags.values()) f.material.dispose();
     for (const r of this.racers) r.model.dispose();
     this.pickups.clear();
-    this.obstacles.clear();
+    this.obstacles.dispose();
     this.events.clear();
   }
 }

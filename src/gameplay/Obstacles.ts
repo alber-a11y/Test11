@@ -147,4 +147,10 @@ export class Obstacles {
     for (const o of this.list) this.group.remove(o.mesh);
     this.list = [];
   }
+
+  dispose() {
+    this.clear();
+    for (const g of Object.values(this.geos)) g.dispose();
+    for (const m of Object.values(this.mats)) m.dispose();
+  }
 }

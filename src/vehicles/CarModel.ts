@@ -270,6 +270,8 @@ export class CarModel {
   readonly def: CarDef;
   readonly trail: TrailDef;
   shieldMesh: THREE.Mesh;
+  private bodyMat!: THREE.Material;
+  private cabinMat!: THREE.Material;
 
   constructor(def: CarDef, look: CarLook) {
     this.def = def;
@@ -286,6 +288,8 @@ export class CarModel {
     cabinMat.metalness = 0.2;
     cabinMat.iridescence = 0;
     this.ownMaterials.push(bodyMat, cabinMat);
+    this.bodyMat = bodyMat;
+    this.cabinMat = cabinMat;
 
     const bodyMesh = new THREE.Mesh(body, bodyMat);
     bodyMesh.castShadow = true;
@@ -491,7 +495,11 @@ export class CarModel {
   }
 
   dispose() {
-    for (const m of this.ownMaterials) m.dispose();
+    for (const m of this.ownMaterials) {
+      // paint textures are per-model (not cached)
+      if (m === this.bodyMat || m === this.cabinMat) (m as THREE.MeshPhysicalMaterial).map?.dispose();
+      m.dispose();
+    }
     this.root.traverse((o) => {
       const m = o as THREE.Mesh;
       // shared geometries (body/cabin/tire) are cached; dispose only per-instance ones

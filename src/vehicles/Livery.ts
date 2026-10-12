@@ -8,7 +8,8 @@ const luminance = (c: number) => (((c >> 16) & 255) * 0.299 + ((c >> 8) & 255) *
 
 /** u: around the body (0 bottom, .25 right, .5 top, .75 left); v: along (0 rear, 1 front). */
 export function bodyTexture(paint: PaintDef, livery: LiveryDef, shape: CarShape, carId: string): THREE.Texture {
-  return cached(`body-${carId}-${paint.id}-${livery.id}`, () => {
+  // not cached: owned and disposed by the CarModel that uses it
+  return (() => {
     const [c, ctx] = makeCanvas(W, H);
     const X = (u: number) => u * W;
     const Y = (v: number) => (1 - v) * H;
@@ -166,12 +167,13 @@ export function bodyTexture(paint: PaintDef, livery: LiveryDef, shape: CarShape,
     ctx.fillStyle = 'rgba(0,0,0,0.75)';
     ctx.fillRect(X(0.42), Y(1), X(0.16), H * 0.018);
     return toTexture(c, { aniso: 4 });
-  });
+  })();
 }
 
 /** Cabin: u across (0 right sill, .5 roof center, 1 left sill), v along cabin (0 rear, 1 front). */
 export function cabinTexture(paint: PaintDef, livery: LiveryDef, shape: CarShape, carId: string): THREE.Texture {
-  return cached(`cabin-${carId}-${paint.id}-${livery.id}`, () => {
+  void carId;
+  return (() => {
     const CW = 256, CH = 256;
     const [c, ctx] = makeCanvas(CW, CH);
     const X = (u: number) => u * CW;
@@ -211,7 +213,7 @@ export function cabinTexture(paint: PaintDef, livery: LiveryDef, shape: CarShape
     ctx.lineTo(X(0.32), Y(r1));
     ctx.fill();
     return toTexture(c, { aniso: 4 });
-  });
+  })();
 }
 
 export function paintMaterial(paint: PaintDef, map: THREE.Texture): THREE.MeshPhysicalMaterial {
