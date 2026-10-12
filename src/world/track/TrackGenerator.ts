@@ -155,7 +155,7 @@ export function generateLevel(level: number): LevelData {
   };
 
   const turn = (len: number, angle: number, bank: number, kind = 'turn') => {
-    const f = inTube ? 0 : wallFlags(0.9 - diff * 0.55);
+    const f = inTube ? 0 : wallFlags(level <= 2 ? 0.9 : 0.55 - diff * 0.4);
     const yaw0 = yaw;
     const s0 = emit(len, kind, (t) => ({
       yaw: yaw0 + angle * ease(t),
@@ -288,8 +288,8 @@ export function generateLevel(level: number): LevelData {
     switch (kind) {
       case 'turn': {
         const a = pickTurnAngle(1.0 + diff * 0.6);
-        const len = Math.abs(a) * rng.range(110, 150) * (1.15 - diff * 0.35);
-        turn(Math.max(60, len), a, rng.range(0.05, 0.35));
+        const len = Math.abs(a) * rng.range(70, 105) * (1.1 - diff * 0.4);
+        turn(Math.max(45, len), a, rng.range(0.05, 0.3));
         heavyCount = Math.max(0, heavyCount - 1);
         break;
       }

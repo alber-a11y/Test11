@@ -104,6 +104,7 @@ export class HudScreen implements Screen {
   }
 
   floater(text: string, color: string) {
+    this.el.querySelectorAll('.floater').forEach((x) => x.remove());
     const f = h('div', { class: 'floater title', style: `color:${color}` }, text);
     this.el.append(f);
     setTimeout(() => f.remove(), 1300);

@@ -39,6 +39,7 @@ export interface RaceEvents {
   gameover: void;
   shieldBreak: void;
   nitroReady: void;
+  botFall: { name: string };
 }
 
 export interface RaceResult {
@@ -122,7 +123,7 @@ export class Race {
       // bots get stats comparable to the player's, scaled with difficulty
       const base = driveStats(effectiveStats(def));
       const pl = pStats;
-      const strength = 0.9 + diff * 0.12 + (isBoss ? 0.08 : 0) + this.rng.range(-0.04, 0.03);
+      const strength = (lvl <= 2 ? 0.86 : 0.9 + diff * 0.12) + (isBoss ? 0.06 : 0) + this.rng.range(-0.04, 0.03);
       const stats = {
         maxSpeed: (base.maxSpeed * 0.35 + pl.maxSpeed * 0.65) * strength,
         accel: (base.accel * 0.4 + pl.accel * 0.6) * strength,
@@ -130,7 +131,7 @@ export class Race {
         nitroTime: base.nitroTime,
       };
       const ai: AiProfile = {
-        skill: clamp(0.72 + diff * 0.22 + this.rng.range(-0.08, 0.06) + (isBoss ? 0.08 : 0), 0.6, 0.98),
+        skill: clamp(0.84 + diff * 0.14 + this.rng.range(-0.06, 0.05) + (isBoss ? 0.06 : 0), 0.7, 1.02),
         speedFactor: 1,
         lane: this.rng.pick([-3.5, 0, 3.5]),
         aggression: this.rng.next(),
@@ -334,18 +335,21 @@ export class Race {
     r.latV = damp(r.latV, targetLat, 9, dt);
     const tube = tr.scalarAt(tr.tube, r.s);
     r.drifting = false;
-    r.slide = damp(r.slide, 0, 3, dt);
+    let sliding = false;
     if (r.state === 'drive' || r.state === 'finished') {
       const kappa = tr.scalarAt(tr.curv, r.s);
       const need = r.v * r.v * kappa - BANK_G * tr.scalarAt(tr.bankAssist, r.s);
-      const grip = st.grip * (this.level.biome.grip) * (tube > 0.5 ? 1.5 : 1) * (r.brake > 0.3 ? 1.08 : 1);
+      const grip = st.grip * this.level.biome.grip * (tube > 0.5 ? 1.5 : 1) * (r.brake > 0.3 ? 1.08 : 1);
       const excess = Math.abs(need) - grip;
       if (excess > 0) {
-        r.slide = -Math.sign(need) * excess * 0.3;
+        // lateral momentum builds up while the tyres are past their limit
+        r.slide = clamp(r.slide - Math.sign(need) * excess * 0.85 * dt, -18, 18);
         r.drifting = excess > 1.5;
         r.v -= excess * 0.06 * dt;
+        sliding = true;
       }
     }
+    if (!sliding) r.slide = damp(r.slide, 0, r.state === 'air' ? 0.5 : 2.2, dt);
     r.d += (r.latV + r.slide) * dt;
 
     // ---- along track ----
@@ -369,6 +373,8 @@ export class Race {
         const pen = side * r.d - limit;
         r.d = side * limit;
         const impact = Math.abs(r.latV + r.slide);
+        // scraping along the barrier while sliding out costs speed
+        if (!inTube && side * r.slide > 0) r.v -= (3 + Math.abs(r.slide) * 1.6) * dt;
         if (side * (r.latV + r.slide) > 0) {
           r.latV = -side * Math.min(4, impact * 0.4);
           r.slide = 0;
@@ -451,6 +457,7 @@ export class Race {
     r.state = 'fall';
     r.fallTimer = 1.5;
     r.nitroTime = 0;
+    if (!r.isPlayer) this.events.emit('botFall', { name: r.name });
     if (r.isPlayer) {
       this.events.emit('fall', undefined);
       if (r.shieldTime > 0) {
@@ -473,7 +480,7 @@ export class Race {
 
   private safeS(s: number) {
     const tr = this.track;
-    let k = Math.max(60, s - 18);
+    let k = Math.max(60, s - 30);
     for (let i = 0; i < 400; i++) {
       const f = tr.flags[tr.index(k)];
       const f2 = tr.flags[tr.index(k + 12)];
@@ -495,7 +502,7 @@ export class Race {
     r.vh = 0;
     r.latV = 0;
     r.slide = 0;
-    r.v = r.stats.maxSpeed * 0.45;
+    r.v = r.stats.maxSpeed * 0.3;
     r.state = r.s >= this.track.finishS ? 'finished' : 'drive';
     r.invulnTime = 2;
     if (r.isPlayer) this.events.emit('respawn', undefined);
@@ -531,9 +538,14 @@ export class Race {
       if (tr.flags[i] & FLAG.RAMP) rampAhead = true;
     }
     const grip = r.stats.grip * this.level.biome.grip * (tr.scalarAt(tr.tube, r.s) > 0.5 ? 1.5 : 1);
-    let target = maxNeed > 0.0005 ? Math.sqrt((grip * ai.skill) / maxNeed) : 999;
+    // occasional overconfident moment: carries too much speed into a turn
+    if (!r.isPlayer && !finished && r.mistakeTime <= 0 && maxNeed > 0.014 && this.rng.chance((0.015 + ai.aggression * 0.04) * dt)) r.mistakeTime = 2.5;
+    const mistake = r.mistakeTime > 0 ? 1.8 : 1;
+    if (r.mistakeTime > 0) r.mistakeTime -= dt;
+    let target = maxNeed > 0.0005 ? Math.sqrt((grip * ai.skill * mistake) / maxNeed) : 999;
     target = Math.min(target, r.stats.maxSpeed * (finished ? 0.5 : 1.05));
     if (rampAhead) target = Math.max(target, r.stats.maxSpeed);
+    if (r.mistakeTime > 0) target = r.stats.maxSpeed * 1.1;
 
     // rubber band against the player (keeps races tight)
     if (!finished && !r.isPlayer) {
@@ -565,7 +577,7 @@ export class Race {
     const lim = this.hwAt(r.s) - CURB_W - 0.8;
     td = clamp(td, -lim, lim);
     // compensate expected slide on curves
-    const steer = clamp((td - r.d) * 0.45 - r.slide * 0.15, -1, 1);
+    const steer = clamp((td - r.d) * 0.45 - r.slide * 0.15, -1, 1) * (r.mistakeTime > 0 ? 0.1 : 1);
     r.steerSm = damp(r.steerSm, steer, 6, dt);
 
     // nitro on straights
@@ -602,11 +614,15 @@ export class Race {
           // rear-end: the one behind slows down, front gets a nudge
           const [back, front] = ds > 0 ? [a, b] : [b, a];
           back.s = front.s - lenSum;
+          // deflect sideways so the faster car slips past instead of being blocked
+          const side = Math.sign(back.d - front.d) || (this.rng.chance(0.5) ? 1 : -1);
+          back.latV += side * 5;
+          front.latV -= side * 2;
           if (back.v > front.v) {
             const dv = back.v - front.v;
-            back.v = front.v - 1;
+            back.v -= dv * 0.45;
             front.v += dv * 0.3;
-            if (a.isPlayer || b.isPlayer) this.events.emit('bump', { strength: dv });
+            if ((a.isPlayer || b.isPlayer) && dv > 1.5) this.events.emit('bump', { strength: dv });
           }
         }
       }

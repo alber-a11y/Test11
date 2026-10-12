@@ -65,7 +65,13 @@ export class MapScreen implements Screen {
       const height = STEP * LEVELS_PER_BIOME;
       const c1 = `#${biome.sky.top.toString(16).padStart(6, '0')}`;
       const c2 = `#${biome.groundColor.toString(16).padStart(6, '0')}`;
-      const band = h('div', { class: 'map-band', style: `top:${top}px;height:${height}px;background:linear-gradient(180deg, ${c1}55, ${c2}55)` }, h('span', null, t(biome.nameKey)));
+      const icons: Record<string, string> = { sky: '🏝️', port: '🚢', bridge: '🌉', slide: '🌊', desert: '🏜️', neon: '🌃', snow: '🏔️', volcano: '🌋' };
+      const band = h(
+        'div',
+        { class: 'map-band', style: `top:${top}px;height:${height}px;background:linear-gradient(180deg, ${c1}aa, ${c2}aa)` },
+        h('span', null, t(biome.nameKey)),
+        h('div', { class: 'biome-ico' }, icons[biome.id] ?? ''),
+      );
       this.inner.append(band);
     }
     // path

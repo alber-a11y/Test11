@@ -79,6 +79,7 @@ export class Racer {
   fallSpin = new THREE.Vector3();
   targetD = 0;
   laneTimer = 0;
+  mistakeTime = 0;
 
   /** Smoothed world pose for camera. */
   readonly pos = new THREE.Vector3();

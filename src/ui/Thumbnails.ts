@@ -14,7 +14,7 @@ export class Thumbnails {
     const d = new THREE.DirectionalLight(0xffffff, 2.4);
     d.position.set(4, 8, 6);
     this.scene.add(d);
-    this.cam.position.set(6.2, 2.6, 7.2);
+    this.cam.position.set(5.0, 2.2, 5.9);
     this.cam.lookAt(0, 0.55, 0);
   }
 

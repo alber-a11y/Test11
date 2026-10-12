@@ -191,7 +191,7 @@ export class Effects {
   }
 
   pickup(pos: THREE.Vector3, color: number) {
-    this.glow.emit({ pos, count: 14, spread: 5, life: 0.45, size: 1.1, sizeEnd: 0.1, color, gravity: -2, drag: 3 });
+    this.glow.emit({ pos, count: 8, spread: 4, life: 0.35, size: 0.55, sizeEnd: 0.05, color, gravity: -2, drag: 3, alpha: 0.7 });
   }
 
   explosion(pos: THREE.Vector3) {

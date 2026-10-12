@@ -17,6 +17,13 @@ export const DEFAULT_POLICY: AdPolicyConfig = {
   maxRevives: 2,
 };
 
+/** ?adpolicy=test — interstitials as often as possible (QA). */
+export function policyFromUrl(): AdPolicyConfig {
+  const p = new URLSearchParams(location.search).get('adpolicy');
+  if (p === 'test') return { ...DEFAULT_POLICY, interstitialCooldown: 5, firstInterstitialDelay: 0, afterRewardedCooldown: 0, minLevelForInterstitial: 1 };
+  return DEFAULT_POLICY;
+}
+
 export class AdPolicy {
   private sessionStart = performance.now();
   private lastInterstitial = -Infinity;

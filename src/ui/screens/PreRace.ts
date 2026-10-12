@@ -16,8 +16,10 @@ export class PreRaceScreen implements Screen {
   constructor(private game: Game, private level: number) {
     this.cur = currencyBar(game);
     const biome = biomeForLevel(level);
-    const body = h('div', { class: 'shop-body', style: 'padding:12px;gap:12px;overflow:auto' });
-    body.append(
+    const body = h('div', { class: 'shop-body', style: 'padding:12px;gap:10px' });
+    const content = h('div', { class: 'col grid', style: 'display:flex;padding:0;gap:10px;overflow-y:auto;flex:1' });
+    body.append(content);
+    content.append(
       h(
         'div',
         { class: 'row', style: 'justify-content:space-between' },
@@ -28,10 +30,10 @@ export class PreRaceScreen implements Screen {
       this.grid,
     );
     const trial = this.trialOffer();
-    if (trial) body.append(trial);
-    body.append(
-      btn(t('prerace.go'), 'green big shine start-btn', () => this.start(null), game),
-    );
+    if (trial) content.append(trial);
+    const go = btn(t('prerace.go'), 'green big shine start-btn', () => this.start(null), game);
+    go.style.flex = 'none';
+    body.append(go);
     const preview = h('div', { class: 'preview-space' });
     this.el = h(
       'div',
@@ -107,7 +109,7 @@ export class PreRaceScreen implements Screen {
       'div',
       { class: 'trial' },
       img,
-      h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'title', style: 'font-size:16px' }, `${t('prerace.trial')}: ${car.name}`), h('div', { style: 'font-size:11px;opacity:.85' }, t('prerace.trial.sub'))),
+      h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'title', style: 'font-size:14px' }, t('prerace.trial')), h('div', { style: 'font-size:13px;color:#ffe27a' }, car.name)),
       btn(t('free'), 'yellow small ad', async () => {
         if (await g.ads.rewarded('trial_car')) this.start(car.id);
       }, g),

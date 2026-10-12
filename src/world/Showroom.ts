@@ -103,12 +103,12 @@ export class Showroom {
       this.car.update(dt, 0, 0, false, 0, 0);
     }
     const portrait = viewH > viewW;
-    const dist = portrait ? 11.5 : 9.5;
+    const dist = portrait ? 11.5 : 12.5;
     const target = this.center.clone().add(new THREE.Vector3(0, 0.7, 0));
     camera.position.set(target.x + dist * 0.62, target.y + 2.6, target.z + dist * 0.78);
     camera.up.set(0, 1, 0);
     camera.lookAt(target);
-    camera.fov = portrait ? 52 : 42;
+    camera.fov = portrait ? 52 : 38;
     if (this.framing === 'shop') {
       if (portrait) camera.setViewOffset(viewW, viewH, 0, viewH * 0.27, viewW, viewH);
       else camera.setViewOffset(viewW, viewH, viewW * 0.24, 0, viewW, viewH);

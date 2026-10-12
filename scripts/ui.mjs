@@ -1,0 +1,18 @@
+import { chromium } from '@playwright/test';
+const out = process.argv[2];
+const w = Number(process.argv[3]), h = Number(process.argv[4]);
+const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const page = await browser.newPage({ viewport: { width: w, height: h }, locale: 'ru-RU', hasTouch: process.argv[5] === 'touch', isMobile: process.argv[5] === 'touch' });
+page.on('pageerror', (e) => console.log('ERR', e.message));
+await page.goto('http://localhost:5173/?ts=4');
+await page.waitForTimeout(1500);
+await page.mouse.click(w / 2, h / 2);
+await page.waitForTimeout(1200);
+const shot = async (n) => { await page.screenshot({ path: `${out}/${n}.png` }); };
+await shot('u1-menu');
+await page.evaluate(() => window.game.goPreRace(1)); await page.waitForTimeout(800); await shot('u2-prerace');
+await page.evaluate(() => window.game.goShop('cars')); await page.waitForTimeout(1500); await shot('u3-shop');
+await page.evaluate(() => window.game.goMap()); await page.waitForTimeout(800); await shot('u4-map');
+await page.evaluate(() => { window.game.save.data.tutorialDone = false; window.game.startRace(4, ['shield', 'magnet']); });
+await page.waitForTimeout(2500); await shot('u5-hud');
+await browser.close();

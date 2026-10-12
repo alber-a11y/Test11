@@ -1,5 +1,5 @@
 import type { AdProvider } from './AdProvider';
-import { AdPolicy } from './AdPolicy';
+import { AdPolicy, policyFromUrl } from './AdPolicy';
 import { t } from '../i18n/i18n';
 import { track } from '../meta/Analytics';
 
@@ -16,7 +16,7 @@ export class AdService {
   private busy = false;
   readonly policy: AdPolicy;
 
-  constructor(private provider: AdProvider, private hooks: AdGuardHooks, policy = new AdPolicy()) {
+  constructor(private provider: AdProvider, private hooks: AdGuardHooks, policy = new AdPolicy(policyFromUrl())) {
     this.policy = policy;
   }
 
