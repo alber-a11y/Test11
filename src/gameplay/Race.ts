@@ -11,6 +11,35 @@ import { Racer, driveStats, effectiveStats, type AiProfile } from './Racer';
 import { Pickups, pickupColor, type PickupItem } from './Pickups';
 import { Obstacles } from './Obstacles';
 import type { Effects } from '../render/Particles';
+import { cached, makeCanvas, toTexture } from '../render/textures/canvas';
+import { ordinal } from '../core/math';
+
+/** Black pennant with the racer's place, like on the reference shots. */
+function placeFlagTexture(place: number, boss: boolean) {
+  return cached(`placeflag-${place}-${boss}`, () => {
+    const [c, ctx] = makeCanvas(128, 128);
+    ctx.fillStyle = '#e8e8e8';
+    ctx.fillRect(10, 8, 6, 120);
+    ctx.fillStyle = boss ? '#b0101a' : '#15161b';
+    ctx.beginPath();
+    ctx.moveTo(16, 8);
+    ctx.lineTo(124, 8);
+    ctx.lineTo(112, 34);
+    ctx.lineTo(124, 60);
+    ctx.lineTo(16, 60);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#c81e1e';
+    ctx.fillRect(16, 8, 6, 52);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'italic 900 36px Arial Black, Arial, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(place), 30, 36);
+    ctx.font = 'italic 900 20px Arial Black, Arial, sans-serif';
+    ctx.fillText(ordinal(place), 30 + ctx.measureText(String(place)).width * 1.8, 30);
+    return toTexture(c, { repeat: false });
+  });
+}
 
 const CURB_W = 1.5;
 const WALL_T = 0.4;
@@ -152,6 +181,15 @@ export class Race {
       [52, -3.2],
       [52, 3.2],
     ];
+    for (const r of this.racers) {
+      if (r.isPlayer) continue;
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: placeFlagTexture(6, r.name === 'BOSS'), depthWrite: false, fog: false }));
+      sp.scale.set(2.6, 2.6, 1);
+      sp.center.set(0.1, 0);
+      sp.renderOrder = 6;
+      this.group.add(sp);
+      this.flags.set(r, sp);
+    }
     this.racers.forEach((r, i) => {
       r.s = grid[i][0];
       r.d = grid[i][1];
@@ -177,6 +215,8 @@ export class Race {
   }
 
   private startNitro = false;
+  private flags = new Map<Racer, THREE.Sprite>();
+  private flagPlace = new Map<Racer, number>();
   /** Debug / attract mode: the player's car is driven by the AI. */
   autoPlayer = false;
 
@@ -783,6 +823,8 @@ export class Race {
       r.pos.copy(r.fallPos);
       m.update(dt, r.v * 0.3, 0, false, 0, 0);
       m.root.visible = r.fallPos.y > -2;
+      const fl = this.flags.get(r);
+      if (fl) fl.visible = false;
       return;
     }
     m.root.visible = true;
@@ -807,6 +849,19 @@ export class Race {
     if (r.state === 'air') pitch = clamp(r.vh * -0.012, -0.2, 0.15);
     m.update(dt, r.v, r.steerSm, r.nitroTime > 0 || r.boostTime > 0, roll, pitch);
     m.shieldMesh.visible = r.shieldTime > 0;
+    const flag = this.flags.get(r);
+    if (flag) {
+      const ahead = r.s - this.player.s;
+      const near = ahead > 5 && ahead < 140;
+      flag.visible = near && this.state !== 'countdown';
+      if (flag.visible) {
+        flag.position.copy(smp.pos).addScaledVector(smp.up, 1.5).addScaledVector(right, -r.halfWidth * 0.9);
+        if (this.flagPlace.get(r) !== r.place) {
+          this.flagPlace.set(r, r.place);
+          (flag.material as THREE.SpriteMaterial).map = placeFlagTexture(r.place, r.name === 'BOSS');
+        }
+      }
+    }
     // invulnerability blink
     if (r.invulnTime > 0 && r.shieldTime <= 0) m.body.visible = Math.floor(r.invulnTime * 12) % 2 === 0;
     else m.body.visible = true;
@@ -835,6 +890,7 @@ export class Race {
   }
 
   dispose() {
+    for (const f of this.flags.values()) f.material.dispose();
     for (const r of this.racers) r.model.dispose();
     this.pickups.clear();
     this.obstacles.clear();

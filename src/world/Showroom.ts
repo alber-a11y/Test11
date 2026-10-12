@@ -39,16 +39,16 @@ export class Showroom {
       }
       return toTexture(c, { repeat: false });
     });
-    const top = new THREE.Mesh(new THREE.CylinderGeometry(4.4, 4.4, 0.4, 64), [
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(3.7, 3.7, 0.4, 64), [
       new THREE.MeshStandardMaterial({ color: 0x1a2440, roughness: 0.4, metalness: 0.6 }),
       new THREE.MeshStandardMaterial({ map: topTex, roughness: 0.35, metalness: 0.3 }),
       new THREE.MeshStandardMaterial({ color: 0x1a2440 }),
     ]);
     top.receiveShadow = true;
-    const base = new THREE.Mesh(new THREE.CylinderGeometry(4.0, 2.2, 2.2, 48), new THREE.MeshStandardMaterial({ color: 0x24305a, roughness: 0.5, metalness: 0.5 }));
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 1.9, 2.2, 48), new THREE.MeshStandardMaterial({ color: 0x24305a, roughness: 0.5, metalness: 0.5 }));
     base.position.y = -1.3;
     this.ringMat = new THREE.MeshBasicMaterial({ color: 0x5ad8ff });
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(4.42, 0.08, 8, 96), this.ringMat);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(3.72, 0.08, 8, 96), this.ringMat);
     ring.rotation.x = Math.PI / 2;
     ring.position.y = 0.05;
     const glow = new THREE.Mesh(
@@ -103,9 +103,9 @@ export class Showroom {
       this.car.update(dt, 0, 0, false, 0, 0);
     }
     const portrait = viewH > viewW;
-    const dist = portrait ? 11.5 : 12.5;
+    const dist = portrait ? 11 : 10.5;
     const target = this.center.clone().add(new THREE.Vector3(0, 0.7, 0));
-    camera.position.set(target.x + dist * 0.62, target.y + 2.6, target.z + dist * 0.78);
+    camera.position.set(target.x + dist * 0.62, target.y + (portrait ? 2.6 : 3.2), target.z + dist * 0.78);
     camera.up.set(0, 1, 0);
     camera.lookAt(target);
     camera.fov = portrait ? 52 : 38;

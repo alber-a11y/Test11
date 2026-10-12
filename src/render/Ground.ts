@@ -48,8 +48,9 @@ void main() {
   vec3 col;
   if (uLava > 0.5) {
     float flow = noise(p * 1.5 + vec2(uTime * 0.1, 0.0)) * 0.7 + noise(p * 5.0 - uTime * 0.2) * 0.3;
-    float cracks = smoothstep(0.45, 0.6, flow);
-    col = mix(uDeep, uShallow * 2.2, cracks);
+    float cracks = smoothstep(0.5, 0.62, flow);
+    vec3 hot = mix(uShallow, vec3(1.0, 0.75, 0.2), smoothstep(0.62, 0.8, flow));
+    col = mix(uDeep, hot * 1.4, cracks);
   } else {
     col = mix(uDeep, uShallow, n * 0.8);
     col = mix(col, uSky, fres * 0.65);

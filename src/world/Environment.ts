@@ -5,6 +5,7 @@ import type { LevelData } from './track/TrackGenerator';
 import type { Biome } from './biomes/Biomes';
 import { containerTexture, windowsTexture, roadTexture, curbTexture } from '../render/textures/trackTextures';
 import { cached, hex, makeCanvas, shade, toTexture } from '../render/textures/canvas';
+import { glowTexture } from '../vehicles/Livery';
 
 /** XZ spatial hash of track samples for prop clearance queries. */
 class TrackGrid {
@@ -70,6 +71,7 @@ export class Environment {
   private disposables: { dispose(): void }[] = [];
   private animated: ((t: number) => void)[] = [];
   private time = 0;
+  private ambient: { pts: THREE.Points; vel: THREE.Vector3; pos: Float32Array; range: number } | null = null;
 
   build(level: LevelData) {
     this.clear();
@@ -93,6 +95,7 @@ export class Environment {
       }
     };
 
+    this.buildAmbient(biome);
     switch (biome.id) {
       case 'sky':
         this.islands(rng, scatter, biome, 28);
@@ -132,12 +135,64 @@ export class Environment {
     }
   }
 
-  update(dt: number) {
+  update(dt: number, camPos?: THREE.Vector3) {
     this.time += dt;
     for (const a of this.animated) a(this.time);
+    const amb = this.ambient;
+    if (amb && camPos) {
+      const p = amb.pos;
+      const R = amb.range;
+      for (let i = 0; i < p.length; i += 3) {
+        p[i] += amb.vel.x * dt + Math.sin(this.time + i) * 0.3 * dt;
+        p[i + 1] += amb.vel.y * dt;
+        p[i + 2] += amb.vel.z * dt;
+        // wrap particles into a box around the camera
+        for (let k = 0; k < 3; k++) {
+          const c = k === 0 ? camPos.x : k === 1 ? camPos.y : camPos.z;
+          let v = p[i + k] - c;
+          if (v > R) v -= 2 * R;
+          else if (v < -R) v += 2 * R;
+          p[i + k] = c + v;
+        }
+      }
+      (amb.pts.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true;
+    }
+  }
+
+  /** Weather / ambience particles: snow, embers, bubbles, dust, neon motes. */
+  private buildAmbient(b: Biome) {
+    this.ambient = null;
+    const cfg: Partial<Record<Biome['id'], { color: number; size: number; vel: [number, number, number]; n: number; additive: boolean }>> = {
+      snow: { color: 0xffffff, size: 0.14, vel: [1, -4, 0], n: 900, additive: false },
+      volcano: { color: 0xff7a2a, size: 0.1, vel: [0.5, 3, 0], n: 350, additive: true },
+      slide: { color: 0xbff4ff, size: 0.12, vel: [0, 2, 0], n: 400, additive: true },
+      desert: { color: 0xf3d6a8, size: 0.08, vel: [5, 0.3, 0], n: 400, additive: false },
+      neon: { color: 0xff5ad8, size: 0.1, vel: [0, 0.6, 0], n: 300, additive: true },
+    };
+    const c = cfg[b.id];
+    if (!c) return;
+    const R = 45;
+    const pos = new Float32Array(c.n * 3);
+    for (let i = 0; i < pos.length; i++) pos[i] = (Math.random() * 2 - 1) * R;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const mat = new THREE.PointsMaterial({
+      color: c.color,
+      size: c.size,
+      map: glowTexture(),
+      transparent: true,
+      depthWrite: false,
+      blending: c.additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+      opacity: 0.9,
+    });
+    const pts = new THREE.Points(g, mat);
+    pts.frustumCulled = false;
+    this.add(pts);
+    this.ambient = { pts, vel: new THREE.Vector3(...c.vel), pos, range: R };
   }
 
   clear() {
+    this.ambient = null;
     for (const d of this.disposables) d.dispose();
     this.disposables = [];
     this.animated = [];

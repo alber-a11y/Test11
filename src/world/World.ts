@@ -99,7 +99,7 @@ export class World {
   update(dt: number, focus: THREE.Vector3, camPos: THREE.Vector3) {
     this.sky.update(dt, camPos);
     this.ground.update(dt, camPos);
-    this.env.update(dt);
+    this.env.update(dt, camPos);
     this.sun.position.copy(focus).addScaledVector(this.sky.sunDir, 80);
     this.sun.target.position.copy(focus);
   }
