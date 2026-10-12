@@ -1,5 +1,5 @@
 import { h } from '../dom';
-import { t, setLang } from '../../i18n/i18n';
+import { t } from '../../i18n/i18n';
 import type { Game } from '../../core/Game';
 import { btn } from './common';
 import { confirmDialog } from './Popups';
@@ -40,7 +40,7 @@ export function openSettings(game: Game) {
     h('h2', { class: 'title' }, t('settings')),
     h('div', { class: 'setting' }, h('span', null, t('music')), slider(s.music, (v) => ((s.music = v), apply()))),
     h('div', { class: 'setting' }, h('span', null, t('sfx')), slider(s.sfx, (v) => ((s.sfx = v), apply()))),
-    h('div', { class: 'setting' }, h('span', null, '🔇'), seg<'on' | 'off'>([['off', '🔊'], ['on', '🔇']], s.muted ? 'on' : 'off', (v) => ((s.muted = v === 'on'), apply()))),
+    h('div', { class: 'setting' }, h('span', null, t('sound')), seg<'on' | 'off'>([['off', '🔊'], ['on', '🔇']], s.muted ? 'on' : 'off', (v) => ((s.muted = v === 'on'), apply()))),
     h('div', { class: 'setting' }, h('span', null, t('vibration')), seg<'on' | 'off'>([['on', 'ON'], ['off', 'OFF']], s.vibration ? 'on' : 'off', (v) => ((s.vibration = v === 'on'), apply()))),
     h(
       'div',
@@ -90,12 +90,8 @@ export function openSettings(game: Game) {
         ],
         s.lang,
         (v) => {
-          s.lang = v;
-          setLang(v);
-          apply();
           close();
-          // rebuild current screen with the new language
-          if (game.mode === 'menu') game.goMenu();
+          game.setLanguage(v);
           openSettings(game);
         },
       ),

@@ -1,10 +1,9 @@
 import { h, coinIco, ring, fmt } from '../dom';
-import { t } from '../../i18n/i18n';
+import { t, placeSuffix } from '../../i18n/i18n';
 import type { Screen } from '../UI';
 import type { Game } from '../../core/Game';
 import type { Race } from '../../gameplay/Race';
 import { displaySpeed } from '../../gameplay/Racer';
-import { ordinal } from '../../core/math';
 
 export class HudScreen implements Screen {
   el: HTMLElement;
@@ -120,7 +119,7 @@ export class HudScreen implements Screen {
     const p = r.player;
     if (p.place !== this.lastPlace) {
       this.lastPlace = p.place;
-      this.posVal.innerHTML = `${p.place}<sup>${ordinal(p.place)}</sup>`;
+      this.posVal.innerHTML = `${p.place}<sup>${placeSuffix(p.place)}</sup>`;
     }
     const kmh = displaySpeed(p.v);
     this.speedVal.textContent = String(kmh);

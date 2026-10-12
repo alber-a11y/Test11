@@ -17,7 +17,7 @@ import { biomeForLevel, BIOMES } from '../world/biomes/Biomes';
 import { Race, type RaceResult } from '../gameplay/Race';
 import { CARS, byId, type BoosterId } from '../meta/Catalog';
 import { displaySpeed } from '../gameplay/Racer';
-import { setLang, t } from '../i18n/i18n';
+import { setLang, t, placeSuffix, lang } from '../i18n/i18n';
 import { track } from '../meta/Analytics';
 import { LoadingScreen } from '../ui/screens/Loading';
 import { MenuScreen } from '../ui/screens/Menu';
@@ -201,6 +201,42 @@ export class Game {
     openSettings(this);
   }
 
+  /** Switch RU/EN and rebuild whatever is on screen. */
+  setLanguage(l: 'auto' | 'ru' | 'en') {
+    this.save.data.settings.lang = l;
+    setLang(l);
+    this.save.save();
+    const cur = this.ui.current;
+    switch (this.ui.currentName) {
+      case 'menu':
+        this.goMenu();
+        break;
+      case 'map':
+        this.goMap();
+        break;
+      case 'shop':
+        this.goShop((cur as ShopScreen).tab);
+        break;
+      case 'garage':
+        this.goGarage();
+        break;
+      case 'prerace':
+        this.goPreRace((cur as PreRaceScreen).level);
+        break;
+      case 'hud':
+        if (this.race) {
+          this.hud = new HudScreen(this, this.race);
+          this.ui.show('hud', this.hud);
+          if (this.paused && this.resumeTimer <= 0) this.ui.modal(new PauseScreen(this).el, { dismissable: false });
+        }
+        break;
+    }
+  }
+
+  get language(): 'ru' | 'en' {
+    return lang;
+  }
+
   // ====================================================================
   startRace(levelNum: number, boosters: BoosterId[], trialCarId: string | null = null) {
     if (this.race) this.leaveRace();
@@ -304,7 +340,7 @@ export class Game {
     });
     ev.on('go', () => {
       sfx.play('go');
-      this.hud?.countdown('GO!', true);
+      this.hud?.countdown(t('go'), true);
     });
     ev.on('pickup', ({ kind, combo }) => {
       if (kind === 'coin') sfx.play('coin', combo);
@@ -365,7 +401,7 @@ export class Game {
     });
     ev.on('overtake', ({ place }) => {
       sfx.play('overtake');
-      this.hud?.floater(`${place}${['', 'ST', 'ND', 'RD'][place] ?? 'TH'}`, '#ffe27a');
+      this.hud?.floater(`${place}${placeSuffix(place)}`, '#ffe27a');
     });
     ev.on('shieldBreak', () => sfx.play('shieldBreak'));
     ev.on('nitroReady', () => sfx.play('nitroReady'));

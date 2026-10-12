@@ -1,9 +1,8 @@
 import { h, coinIco, gemIco, starIco, fmt, fmtTime } from '../dom';
-import { t } from '../../i18n/i18n';
+import { t, placeSuffix } from '../../i18n/i18n';
 import type { Screen } from '../UI';
 import type { Game } from '../../core/Game';
 import { btn } from './common';
-import { ordinal } from '../../core/math';
 import type { RaceResult } from '../../gameplay/Race';
 import { CARS, byId } from '../../meta/Catalog';
 
@@ -22,7 +21,7 @@ export class ResultScreen implements Screen {
     const panel = h('div', { class: 'panel' });
     panel.append(
       h('div', { class: 'title', style: 'font-size:18px;opacity:.85' }, `${t('level')} ${r.level}`),
-      h('div', { class: `place-big title ${win ? '' : 'fail'}` }, r.place === 1 ? t('finish.win') : `${r.place}${ordinal(r.place)}`),
+      h('div', { class: `place-big title ${win ? '' : 'fail'}` }, r.place === 1 ? t('finish.win') : t('finish.place', { n: `${r.place}${placeSuffix(r.place)}` })),
     );
     if (win) panel.append(h('div', { class: 'stars-row' }, starIco(r.stars >= 1), starIco(r.stars >= 2), starIco(r.stars >= 3)));
     else panel.append(h('div', { style: 'margin:8px 0 6px;color:#ffb0a0' }, t('finish.fail')));

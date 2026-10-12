@@ -54,8 +54,8 @@ export class MockProvider implements AdProvider {
         <div class="mock-ad__label">${t('ad.label')}</div>
         <div class="mock-ad__body">
           <div class="mock-ad__logo">AD</div>
-          <div class="mock-ad__title">${rewarded ? 'Rewarded video' : 'Interstitial'}</div>
-          <div class="mock-ad__sub">Mock provider — real ad network will be plugged in here</div>
+          <div class="mock-ad__title">${rewarded ? t('ad.mock.rewarded') : t('ad.mock.interstitial')}</div>
+          <div class="mock-ad__sub">${t('ad.mock.sub')}</div>
         </div>
         <div class="mock-ad__timer"></div>
         <button class="mock-ad__close" aria-label="close">✕</button>`;

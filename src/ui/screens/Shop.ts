@@ -1,5 +1,5 @@
 import { h, coinIco, gemIco, fmt } from '../dom';
-import { t } from '../../i18n/i18n';
+import { t, itemName } from '../../i18n/i18n';
 import type { Screen } from '../UI';
 import type { Game } from '../../core/Game';
 import { backButton, btn, currencyBar } from './common';
@@ -42,7 +42,7 @@ export function statsBlock(def: CarDef, upgrades?: Record<string, number>) {
 
 export class ShopScreen implements Screen {
   el: HTMLElement;
-  private tab: ShopTab;
+  tab: ShopTab;
   private grid = h('div', { class: 'grid' });
   private tabsEl = h('div', { class: 'tabs' });
   private actions = h('div', { class: 'shop-actions' });
@@ -224,6 +224,11 @@ export class ShopScreen implements Screen {
     return h('div', { class: 'price' }, coinIco(), fmt(it.price));
   }
 
+  private nameOf(it: Item) {
+    const kind = KIND[this.tab];
+    return kind && kind !== 'car' ? itemName(kind, it.id, it.name) : it.name;
+  }
+
   private renderGrid() {
     this.grid.innerHTML = '';
     if (this.tab === 'boosters') return this.renderBoosters();
@@ -234,7 +239,7 @@ export class ShopScreen implements Screen {
         'div',
         { class: `card ${it.id === this.selected ? 'selected' : ''} ${it.id === eq ? 'equipped' : ''}` },
         h('div', { class: 'thumb' }, this.thumb(it)),
-        h('div', { class: 'name' }, it.name),
+        h('div', { class: 'name' }, this.nameOf(it)),
         this.priceTag(it),
       );
       card.addEventListener('click', () => {
@@ -264,7 +269,7 @@ export class ShopScreen implements Screen {
     if (!it) return;
     const kind = KIND[this.tab]!;
     const eco = this.game.eco;
-    const info = h('div', { class: 'info' }, h('div', { class: 'nm' }, it.name));
+    const info = h('div', { class: 'info' }, h('div', { class: 'nm' }, this.nameOf(it)));
     if (this.tab === 'cars') {
       const def = byId(CARS, it.id);
       info.append(statsBlock(def, eco.isOwned('car', it.id) ? eco.custom(it.id).upgrades : undefined));
@@ -299,7 +304,7 @@ export class ShopScreen implements Screen {
           if (unlocked) {
             this.game.audio.sfx.play('reward');
             eco.equip(kind, it.id);
-            this.game.ui.toast(`✔ ${it.name}`);
+            this.game.ui.toast(`✔ ${this.nameOf(it)}`);
           }
           this.renderGrid();
           this.renderActions();

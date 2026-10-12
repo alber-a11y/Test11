@@ -111,6 +111,13 @@ const ru: Record<string, string> = {
   'yes': 'Да',
   'no': 'Нет',
   'trial.end': 'Тест-драйв завершён',
+  'go': 'ВПЕРЁД!',
+  'logo.sub': 'ГОНКИ 3D',
+  'language.short': 'Язык',
+  'sound': 'Звук',
+  'ad.mock.rewarded': 'Видео с наградой',
+  'ad.mock.interstitial': 'Полноэкранная реклама',
+  'ad.mock.sub': 'Заглушка — здесь будет реклама площадки',
 };
 
 const en: Record<string, string> = {
@@ -226,6 +233,13 @@ const en: Record<string, string> = {
   'yes': 'Yes',
   'no': 'No',
   'trial.end': 'Test drive is over',
+  'go': 'GO!',
+  'logo.sub': 'RACING 3D',
+  'language.short': 'Language',
+  'sound': 'Sound',
+  'ad.mock.rewarded': 'Rewarded video',
+  'ad.mock.interstitial': 'Interstitial',
+  'ad.mock.sub': 'Mock provider — the real ad network goes here',
 };
 
 let dict = ru;
@@ -242,4 +256,42 @@ export function t(key: string, params?: Record<string, string | number>): string
   let s = dict[key] ?? en[key] ?? key;
   if (params) for (const k in params) s = s.replace(`{${k}}`, String(params[k]));
   return s;
+}
+
+/**
+ * Place suffix. English: 1ST / 2ND…; Russian: "-е" for a place ("2-е место"),
+ * "-й" for a racer label on the flags ("2-й").
+ */
+export function placeSuffix(n: number, kind: 'place' | 'racer' = 'place'): string {
+  if (lang === 'ru') return kind === 'place' ? '-Е' : '-Й';
+  const s = n % 100;
+  if (s >= 11 && s <= 13) return 'TH';
+  return ['TH', 'ST', 'ND', 'RD'][n % 10] ?? 'TH';
+}
+
+const ITEM_RU: Record<string, string> = {
+  // paints
+  'paint.red': 'Гоночный красный', 'paint.yellow': 'Жёлтое такси', 'paint.blue': 'Океан', 'paint.white': 'Снег',
+  'paint.black': 'Полночь', 'paint.green': 'Яд', 'paint.orange': 'Закат', 'paint.cyan': 'Лёд', 'paint.purple': 'Виноград',
+  'paint.silver': 'Серебро', 'paint.lime': 'Кислота', 'paint.pink': 'Жвачка', 'paint.racingred': 'Россо',
+  'paint.matteblack': 'Стелс', 'paint.mattegreen': 'Хаки', 'paint.gold': 'Золото', 'paint.chrome': 'Хром',
+  'paint.carbon': 'Карбон', 'paint.chameleon': 'Хамелеон', 'paint.sunrise': 'Рассвет', 'paint.lava': 'Лава',
+  // liveries
+  'livery.none': 'Без винила', 'livery.twin': 'Двойные полосы', 'livery.side': 'Боковая линия', 'livery.number': 'Гоночный номер',
+  'livery.checker': 'Шахматка', 'livery.flames': 'Пламя', 'livery.gradient': 'Градиент', 'livery.camo': 'Камуфляж', 'livery.tiger': 'Тигр',
+  // rims
+  'rim.sport': 'Спорт', 'rim.classic': 'Классика', 'rim.mesh': 'Сетка', 'rim.rally': 'Ралли', 'rim.turbine': 'Турбина',
+  'rim.gold': 'Золото', 'rim.red': 'Красная линия', 'rim.neonblue': 'Электро',
+  // neon
+  'neon.off': 'Выключен', 'neon.green': 'Токсик', 'neon.red': 'Кровь', 'neon.purple': 'Фиолет', 'neon.blue': 'Лёд',
+  'neon.pink': 'Розовый', 'neon.gold': 'Золото', 'neon.rainbow': 'Радуга',
+  // nitro trails
+  'trail.fire': 'Огонь', 'trail.blue': 'Синее пламя', 'trail.plasma': 'Плазма', 'trail.green': 'Токсик',
+  'trail.rainbow': 'Радуга', 'trail.hearts': 'Любовь', 'trail.lightning': 'Шторм',
+};
+
+/** Localized name of a shop item (car names are brand names and stay as is). */
+export function itemName(kind: string, id: string, fallback: string): string {
+  if (lang === 'ru') return ITEM_RU[`${kind}.${id}`] ?? fallback;
+  return fallback;
 }

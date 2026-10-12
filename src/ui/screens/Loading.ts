@@ -13,7 +13,7 @@ export class LoadingScreen implements Screen {
     this.el = h(
       'div',
       { class: 'screen loading' },
-      h('div', { class: 'logo', html: 'SKY RUSH<small>RACING 3D</small>' }),
+      h('div', { class: 'logo', html: `SKY RUSH<small>${t('logo.sub')}</small>` }),
       h('div', { class: 'loadbar' }, this.bar),
       this.tap,
     );

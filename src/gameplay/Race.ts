@@ -12,11 +12,11 @@ import { Pickups, pickupColor, type PickupItem } from './Pickups';
 import { Obstacles } from './Obstacles';
 import type { Effects } from '../render/Particles';
 import { cached, makeCanvas, toTexture } from '../render/textures/canvas';
-import { ordinal } from '../core/math';
+import { lang, placeSuffix } from '../i18n/i18n';
 
 /** Black pennant with the racer's place, like on the reference shots. */
 function placeFlagTexture(place: number, boss: boolean) {
-  return cached(`placeflag-${place}-${boss}`, () => {
+  return cached(`placeflag-${place}-${boss}-${lang}`, () => {
     const [c, ctx] = makeCanvas(128, 128);
     ctx.fillStyle = '#e8e8e8';
     ctx.fillRect(10, 8, 6, 120);
@@ -36,7 +36,7 @@ function placeFlagTexture(place: number, boss: boolean) {
     ctx.textBaseline = 'middle';
     ctx.fillText(String(place), 30, 36);
     ctx.font = 'italic 900 20px Arial Black, Arial, sans-serif';
-    ctx.fillText(ordinal(place), 30 + ctx.measureText(String(place)).width * 1.8, 30);
+    ctx.fillText(placeSuffix(place, 'racer'), 30 + ctx.measureText(String(place)).width * 1.8, 30);
     return toTexture(c, { repeat: false });
   });
 }

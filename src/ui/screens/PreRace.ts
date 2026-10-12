@@ -13,7 +13,7 @@ export class PreRaceScreen implements Screen {
   private grid = h('div', { class: 'boosters' });
   private cur: ReturnType<typeof currencyBar>;
 
-  constructor(private game: Game, private level: number) {
+  constructor(private game: Game, readonly level: number) {
     this.cur = currencyBar(game);
     const biome = biomeForLevel(level);
     const body = h('div', { class: 'shop-body', style: 'padding:12px;gap:10px' });

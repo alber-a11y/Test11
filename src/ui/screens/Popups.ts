@@ -1,5 +1,5 @@
 import { h, coinIco, gemIco, fmt } from '../dom';
-import { t } from '../../i18n/i18n';
+import { t, itemName } from '../../i18n/i18n';
 import type { Game } from '../../core/Game';
 import { btn } from './common';
 import { Economy } from '../../meta/Economy';
@@ -227,7 +227,7 @@ export function openChest(game: Game, chestLevel: number, onDone: () => void) {
   let image: string | undefined;
   let label: string | undefined;
   if (res.item) {
-    label = `${res.item.name}`;
+    label = itemName(res.item.kind, res.item.id, res.item.name);
     if (res.item.kind === 'car') {
       const def = byId(CARS, res.item.id);
       image = game.thumbs.car({ carId: def.id, paint: def.paint, livery: def.livery, rim: def.rim, neon: 'red', trail: 'fire' }, 320, 180);

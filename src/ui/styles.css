@@ -1907,3 +1907,30 @@ body.ad-active #ui-root * {
   opacity: 0.55;
   filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.25));
 }
+
+.lang-btn {
+  font-style: normal;
+  gap: 4px;
+  padding: 8px 12px;
+}
+
+.lang-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lang-label b {
+  opacity: 0.45;
+  font-weight: 900;
+}
+
+.lang-label b.on {
+  opacity: 1;
+  color: var(--yellow);
+}
+
+.lang-label i {
+  opacity: 0.4;
+  font-style: normal;
+}

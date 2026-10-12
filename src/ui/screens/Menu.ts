@@ -45,7 +45,18 @@ export class MenuScreen implements Screen {
     this.el = h(
       'div',
       { class: 'screen menu' },
-      h('div', { class: 'topbar' }, this.cur.el, h('div', { class: 'spacer' })),
+      h(
+        'div',
+        { class: 'topbar' },
+        this.cur.el,
+        h('div', { class: 'spacer' }),
+        btn(
+          h('span', { class: 'lang-label' }, h('b', { class: game.language === 'ru' ? 'on' : '' }, 'RU'), h('i', null, '/'), h('b', { class: game.language === 'en' ? 'on' : '' }, 'EN')),
+          'dark small lang-btn',
+          () => game.setLanguage(game.language === 'ru' ? 'en' : 'ru'),
+          game,
+        ),
+      ),
       h('div', { class: 'logo', html: 'SKY RUSH' }),
       h('div', { class: 'spacer' }),
       left,
